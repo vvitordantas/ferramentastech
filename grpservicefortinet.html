@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Grupo de Portas Fortinet</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: #1e3a8a;
+            color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #2e4b9a;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            margin: 30px auto;
+        }
+        h1 {
+            text-align: center;
+            color: #fff;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #d1d5db;
+        }
+        input[type="text"],
+        textarea,
+        select {
+            width: calc(100% - 16px);
+            padding: 10px;
+            margin-bottom: 5px;
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: #374151;
+            color: #e5e7eb;
+        }
+        textarea {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: #f44336;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #4f46e5;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4338ca;
+        }
+        #resultado {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            background-color: #374151;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        footer {
+            margin-top: auto;
+            padding: 20px 0;
+            text-align: center;
+            color: #d1d5db;
+            font-size: 0.9em;
+        }
+        footer a {
+            color: #8b5cf6;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        footer a:hover {
+            color: #a78bfa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Gerador de Grupo de Portas Fortinet</h1>
+        <form id="formGerador">
+            <div>
+                <label for="nomeGrupo">Nome do Grupo:</label>
+                <input type="text" id="nomeGrupo" name="nomeGrupo" required>
+            </div>
+
+            <div>
+                <label for="portasTCP">Portas TCP (um valor ou range por linha):</label>
+                <textarea id="portasTCP" name="portasTCP" rows="5" placeholder="Ex: &#10;100-200&#10;443"></textarea>
+                <div id="portasTCPError" class="error"></div>
+            </div>
+            <div>
+                <label for="portasUDP">Portas UDP (um valor ou range por linha):</label>
+                <textarea id="portasUDP" name="portasUDP" rows="5" placeholder="Ex: &#10;123&#10;5000-5010"></textarea>
+                <div id="portasUDPError" class="error"></div>
+            </div>
+
+<!--            <div>
+                <label for="portasTCP">Portas TCP (um valor ou range por linha):</label>
+                <textarea id="portasTCP" name="portasTCP" rows="5"></textarea>
+                <div id="portasTCPError" class="error"></div>
+            </div>
+            <div>
+                <label for="portasUDP">Portas UDP (um valor ou range por linha):</label>
+                <textarea id="portasUDP" name="portasUDP" rows="5"></textarea>
+                <div id="portasUDPError" class="error"></div>
+            </div> -->
+            <div id="generalError" class="error"></div>
+            <div>
+                <label for="permitirICMP">Liberar Ping?</label>
+                <select id="permitirICMP" name="permitirICMP">
+                    <option value="sim">Sim</option>
+                    <option value="nao">Não</option>
+                </select>
+            </div>
+            <button type="button" onclick="gerarComando()">Gerar Comando</button>
+        </form>
+
+        <div id="resultado" style="display: none;">
+            <h2>Comando Fortinet para Criar portas e Grupo</h2>
+            <pre id="comandoGerado"></pre>
+        </div>
+    </div>
+
+    <footer>
+        Produzido por <a href="https://www.linkedin.com/in/vitordantas/" target="_blank"
+            rel="noopener noreferrer">Vitor Dantas</a>
+    </footer>
+
+    <script>
+        function gerarComando() {
+            const nomeGrupo = document.getElementById("nomeGrupo").value.trim();
+            const portasTCP = document.getElementById("portasTCP").value.trim().split('\n').map(p => p.trim());
+            const portasUDP = document.getElementById("portasUDP").value.trim().split('\n').map(p => p.trim());
+            const permitirICMP = document.getElementById("permitirICMP").value;
+
+            const tcpErrorDiv = document.getElementById("portasTCPError");
+            const udpErrorDiv = document.getElementById("portasUDPError");
+            const generalErrorDiv = document.getElementById("generalError"); // Get the general error div [cite: 3]
+
+            // Limpar mensagens de erro anteriores
+            tcpErrorDiv.textContent = "";
+            udpErrorDiv.textContent = "";
+            generalErrorDiv.textContent = ""; // Clear general error message [cite: 3]
+
+            let hasError = false;
+
+            if (!nomeGrupo) {
+                alert("Por favor, insira o nome do grupo.");
+                return;
+            }
+
+            // Check if both TCP and UDP are empty
+            if (portasTCP.length === 1 && portasTCP[0] === "" && portasUDP.length === 1 && portasUDP[0] === "") {
+                generalErrorDiv.textContent = "Pelo menos um dos campos deve ser preenchido"; // Set general error message [cite: 3]
+                generalErrorDiv.style.color = "red";
+                return;
+            }
+
+            let comando = `config firewall service custom\n`;
+            
+            // Process TCP ports only if they are not empty
+            if (!(portasTCP.length === 1 && portasTCP[0] === "")) {
+                portasTCP.forEach(porta => {
+                    if (porta.match(/^\d+$/) && validaPorta(porta)) {
+                        comando += `edit "TCP/${porta}"\n`;
+                        comando += `set protocol TCP\n`;
+                        comando += `set tcp-portrange ${porta}\n`;
+                        comando += `next\n`;
+                    } else if (porta.match(/^\d+-\d+$/) && validaPorta(porta)) {
+                        comando += `edit "TCP/${porta}"\n`;
+                        comando += `set protocol TCP\n`;
+                        comando += `set tcp-portrange ${porta}\n`;
+                        comando += `next\n`;
+                    } else if (porta !== "") { // Ignore empty strings
+                        hasError = true;
+                        tcpErrorDiv.textContent = `Erro na porta/range: ${porta}`;
+                        tcpErrorDiv.style.color = "red";
+                    }
+                });
+            }
+
+            // Process UDP ports only if they are not empty
+            if (!(portasUDP.length === 1 && portasUDP[0] === "")) {
+                portasUDP.forEach(porta => {
+                    if (porta.match(/^\d+$/) && validaPorta(porta)) {
+                        comando += `edit "UDP/${porta}"\n`;
+                        comando += `set protocol UDP\n`;
+                        comando += `set udp-portrange ${porta}\n`;
+                        comando += `next\n`;
+                    } else if (porta.match(/^\d+-\d+$/) && validaPorta(porta)) {
+                        comando += `edit "UDP/${porta}"\n`;
+                        comando += `set protocol UDP\n`;
+                        comando += `set udp-portrange ${porta}\n`;
+                        comando += `next\n`;
+                    } else if (porta !== "") { // Ignore empty strings
+                        hasError = true;
+                        udpErrorDiv.textContent = `Erro na porta/range: ${porta}`;
+                        udpErrorDiv.style.color = "red";
+                    }
+                });
+            }
+
+            if (permitirICMP === "sim") {
+                comando += `edit "ICMP"\n`;
+                comando += `set protocol ICMP\n`;
+                comando += `next\n`;
+            }
+
+            comando += `end\n\n`;
+            comando += `config firewall service group\nedit "${nomeGrupo}"\n`;
+
+            if (!hasError) {
+                portasTCP.forEach(porta => {
+                    if (porta.match(/^\d+$/) || porta.match(/^\d+-\d+$/)) {
+                        comando += `append member "TCP/${porta}"\n`;
+                    }
+                });
+                portasUDP.forEach(porta => {
+                    if (porta.match(/^\d+$/) || porta.match(/^\d+-\d+$/)) {
+                        comando += `append member "UDP/${porta}"\n`;
+                    }
+                });
+                if (permitirICMP === "sim") {
+                    comando += `append member "ICMP"\n`;
+                }
+
+                comando += `next\nend`;
+                document.getElementById("comandoGerado").textContent = comando;
+                document.getElementById("resultado").style.display = "block";
+            } else {
+                document.getElementById("resultado").style.display = "none";
+            }
+        }
+
+        function validaPorta(porta) {
+            const range = porta.split('-');
+            const inicio = parseInt(range[0], 10);
+            const fim = range[1] ? parseInt(range[1], 10) : inicio;
+            return inicio >= 0 && inicio <= 65535 && fim >= 0 && fim <= 65535 && inicio <= fim;
+        }
+    </script>
+</body>
+
+</html>
