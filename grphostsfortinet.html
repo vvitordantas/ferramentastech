@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Grupo de Hosts Fortinet (Criação + Append)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0; /* Reset default margin */
+            background-color: #1e3a8a; /* Dark blue background */
+            color: #f0f0f0; /* Light gray/white text */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ensure full viewport height */
+        }
+        .container {
+            background-color: #2e4b9a; /* Slightly lighter dark blue for container */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            margin: 30px auto; /* Center container with some top/bottom margin */
+        }
+        h1, h2 {
+            text-align: center;
+            color: #fff; /* White headings */
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #d1d5db; /* Light gray label text */
+            position: relative;
+        }
+        .info-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            color: #6b7280; /* Gray info icon */
+            border: 1px solid #4b5563; /* Darker gray border */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+        }
+        .tooltip {
+            visibility: hidden;
+            width: 350px;
+            background-color: #374151; /* Dark gray tooltip background */
+            color: #e5e7eb; /* Light gray tooltip text */
+            text-align: center;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -175px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid #4b5563; /* Darker gray border */
+            font-size: 0.9em;
+        }
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #374151 transparent transparent transparent;
+        }
+        .info-icon:hover + .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        input[type="text"],
+        textarea {
+            width: calc(100% - 16px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #4b5563; /* Darker gray border */
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+            background-color: #374151; /* Dark gray input background */
+            color: #e5e7eb; /* Light gray input text */
+        }
+        textarea {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        button {
+            background-color: #4f46e5; /* Indigo button */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4338ca; /* Darker indigo on hover */
+        }
+        #resultado {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #4b5563; /* Darker gray border */
+            border-radius: 6px;
+            background-color: #374151; /* Dark gray result background */
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        #resultado h2 {
+            font-size: 1.2em;
+            margin-top: 0;
+            color: #fff; /* White result heading */
+        }
+        .error {
+            color: #f44336; /* Red error text */
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        footer {
+            margin-top: auto; /* Push footer to the bottom */
+            padding: 20px 0;
+            text-align: center;
+            color: #d1d5db; /* Light gray footer text */
+            font-size: 0.9em;
+        }
+        footer a {
+            color: #8b5cf6; /* Purple link color */
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        footer a:hover {
+            color: #a78bfa; /* Lighter purple on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gerador de Grupo de Hosts Fortinet</h1>
+        <form id="formGerador">
+            <div>
+                <label for="nomeGrupo">Nome do Grupo:</label>
+                <input type="text" id="nomeGrupo" name="nomeGrupo" required>
+            </div>
+            <div>
+                <label for="ipsRanges">
+                    IPs e Ranges (um por linha):
+                    <span class="info-icon">?</span>
+                    <span class="tooltip">
+                        Para definir um IP individual, utilize o formato: X.X.X.X (onde X é um número de 0 a 255).<br>
+                        Para definir um range de IPs, utilize o formato: IP_Inicial-IP_Final (ex: 192.168.1.10-192.168.1.20).<br>
+                        Para definir uma sub-rede, utilize o formato CIDR: X.X.X.X/YY (onde X é um número de 0 a 255 e YY é um número de 0 a 32).
+                    </span>
+                </label>
+                <textarea id="ipsRanges" name="ipsRanges" rows="5"></textarea>
+                <div id="ipsRangesError" class="error"></div>
+            </div>
+            <div>
+                <label for="fqdnList">
+                    FQDNs (um por linha):
+                    <span class="info-icon">?</span>
+                    <span class="tooltip">
+                        Digite o FQDN completo (ex: google.com).<br>
+                        Caso digite um endereço web como protocolo://meu.site/QualquerCoisa, será convertido para apenas meu.site.
+                    </span>
+                </label>
+                <textarea id="fqdnList" name="fqdnList" rows="5"></textarea>
+            </div>
+            <button type="button" onclick="gerarComando()">Gerar Comando</button>
+        </form>
+
+        <div id="resultado" style="display: none;">
+            <h2>Comando Fortinet para Criar Grupo e Adicionar Hosts</h2>
+            <pre id="comandoGerado"></pre>
+        </div>
+    </div>
+
+    <footer>
+        Produzido por <a href="https://www.linkedin.com/in/vitordantas/" target="_blank" rel="noopener noreferrer">Vitor Dantas</a>
+    </footer>
+
+    <script>
+        function isValidIP(ip) {
+            if (!/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ip)) {
+                return false;
+            }
+            return true;
+        }
+
+        function compareIPs(ip1, ip2) {
+            const parts1 = ip1.split('.').map(Number);
+            const parts2 = ip2.split('.').map(Number);
+            for (let i = 0; i < 4; i++) {
+                if (parts1[i] < parts2[i]) return -1;
+                if (parts1[i] > parts2[i]) return 1;
+            }
+            return 0;
+        }
+
+        function isValidCIDR(cidr) {
+            const cidrRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/(\d+)$/;
+            const match = cidr.match(cidrRegex);
+            if (match) {
+                const mask = parseInt(match[1], 10);
+                return mask >= 0 && mask <= 32;
+            }
+            return false;
+        }
+
+        function extractHostname(url) {
+            try {
+                const urlObject = new URL(url);
+                return urlObject.hostname;
+            } catch (error) {
+                // Se a string não for uma URL válida, retorna a string original
+                return url;
+            }
+        }
+
+        function gerarComando() {
+            const nomeGrupo = document.getElementById("nomeGrupo").value.trim();
+            const ipsRangesText = document.getElementById("ipsRanges").value.trim();
+            const fqdnListText = document.getElementById("fqdnList").value.trim();
+            const comandoGeradoElement = document.getElementById("comandoGerado");
+            const resultadoDiv = document.getElementById("resultado");
+            const ipsRangesError = document.getElementById("ipsRangesError");
+            ipsRangesError.textContent = ""; // Limpa mensagens de erro anteriores
+            let hasIPError = false;
+
+            if (!nomeGrupo) {
+                alert("Por favor, insira o nome do grupo.");
+                return;
+            }
+
+            let comando = `config firewall address\n`;
+            const ipsRanges = ipsRangesText.split('\n').map(item => item.trim()).filter(item => item !== '');
+            const ipObjectNames = [];
+            ipsRanges.forEach(ipRange => {
+                let objectName;
+                if (ipRange.includes('-')) {
+                    const parts = ipRange.split('-');
+                    const startIP = parts[0].trim();
+                    const endIP = parts[1].trim();
+                    if (!isValidIP(startIP) || !isValidIP(endIP)) {
+                        ipsRangesError.textContent = "Formato de IP inválido no range: " + ipRange;
+                        hasIPError = true;
+                        return;
+                    }
+                    if (compareIPs(startIP, endIP) > 0) {
+                        ipsRangesError.textContent = "IP inicial do range é maior que o IP final: " + ipRange;
+                        hasIPError = true;
+                        return;
+                    }
+                    objectName = `${startIP}-${endIP}`;
+                    comando += `edit "${objectName}"\n`;
+                    comando += `set type iprange\n`;
+                    comando += `set start-ip ${startIP}\n`;
+                    comando += `set end-ip ${endIP}\n`;
+                } else if (isValidCIDR(ipRange)) {
+                    objectName = `net-${ipRange.replace(/\//g, '_')}`; // Adiciona "net-" ao nome do objeto CIDR
+                    comando += `edit "${objectName}"\n`;
+                    comando += `set subnet ${ipRange}\n`;
+                } else if (isValidIP(ipRange)) {
+                    objectName = ipRange;
+                    comando += `edit "${objectName}"\n`;
+                    comando += `set type ipmask\n`;
+                    comando += `set subnet ${ipRange} 255.255.255.255\n`;
+                } else {
+                    ipsRangesError.textContent = "Formato de IP ou sub-rede inválido: " + ipRange;
+                    hasIPError = true;
+                    return;
+                }
+                comando += `next\n`;
+                ipObjectNames.push(`"${objectName}"`);
+            });
+
+            if (hasIPError) {
+                resultadoDiv.style.display = "none";
+                return;
+            }
+
+            const fqdns = fqdnListText.split('\n').map(item => item.trim()).filter(item => item !== '');
+            const fqdnObjectNames = [];
+            fqdns.forEach(fqdn => {
+                // Extrai o hostname usando a nova função
+                const hostname = extractHostname(fqdn);
+                const objectName = hostname; // Não substituir pontos por underscores no nome do objeto FQDN
+                comando += `edit "${objectName}"\n`;
+                comando += `set type fqdn\n`;
+                comando += `set fqdn "${hostname}"\n`;
+                comando += `next\n`;
+                fqdnObjectNames.push(`"${objectName}"`);
+            });
+
+            comando += `end\n\n`;
+            comando += `config firewall addrgrp\n`;
+            comando += `edit "${nomeGrupo}"\n`;
+
+            const allMembers = [...ipObjectNames, ...fqdnObjectNames];
+            if (allMembers.length > 0) {
+                allMembers.forEach(member => {
+                    comando += `append member ${member}\n`;
+                });
+            }
+
+            comando += `next\n`;
+            comando += `end\n`;
+
+            comandoGeradoElement.textContent = comando;
+            resultadoDiv.style.display = "block";
+        }
+    </script>
+</body>
+</html>
