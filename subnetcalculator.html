@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Sub-rede IPv4</title>
+    <style>
+        /* Cores replicadas do seu arquivo index.html */
+        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #1e3a8a; /* Fundo azul escuro */
+            --container-bg: #2e4b9a; /* Container azul mais claro */
+            --primary-color: #5591f2; /* Azul para destaque (botões) */
+            --text-color: #f0f0f0; /* Texto cinza claro */
+            --border-color: #4b6cb7; /* Borda em tom azulado */
+            --result-bg: #1c3172; /* Fundo do resultado (mais escuro) */
+            --text-white: #ffffff; /* Cor branca para títulos e links */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-white);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .instructions {
+            text-align: center;
+            color: #d1d5db; /* Cinza um pouco mais escuro para instruções */
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        select {
+             background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23f0f0f0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 10px auto;
+            padding-right: 40px;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(85, 145, 242, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: var(--text-white);
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #4b7bcf;
+        }
+
+        #results {
+            margin-top: 30px;
+            background-color: var(--result-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: none; /* Inicia oculto */
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item span:first-child {
+            font-weight: bold;
+            color: var(--text-white);
+        }
+
+        .result-item span:last-child {
+            font-family: 'Courier New', Courier, monospace;
+            color: #67e8f9; /* Ciano claro para destacar os valores */
+            text-align: right;
+        }
+        
+        #error-message {
+            color: #f87171; /* Vermelho claro para erros */
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 20px 0;
+            text-align: center;
+            color: var(--text-white);
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: var(--text-white);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Calculadora de Sub-rede IPv4</h1>
+        <p class="instructions">Insira o IP e a máscara em um dos formatos aceitos abaixo.</p>
+        <form id="subnet-form">
+            <div class="form-group">
+                <label for="ipInput">Endereço IP / Máscara</label>
+                <input type="text" id="ipInput" placeholder="Ex: 192.168.0.10/24 ou 192.168.1.1 255.255.255.0" required>
+            </div>
+            <div class="form-group">
+                <label for="cidrInput">Prefixo CIDR (se não informado acima)</label>
+                <select id="cidrInput">
+                    <option value="" selected>Selecione uma máscara...</option>
+                </select>
+            </div>
+            <button type="button" id="calculateBtn">Calcular</button>
+        </form>
+        <div id="error-message"></div>
+        <div id="results"></div>
+    </div>
+
+    <footer>
+        Produzido por <a href="https://www.linkedin.com/in/vitordantas/" target="_blank" rel="noopener noreferrer">Vitor Dantas</a>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+            // --- Funções de Conversão e Validação ---
+            function ipToLong(ip) {
+                return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+            }
+
+            function longToIp(long) {
+                return [ (long >>> 24), (long >>> 16) & 255, (long >>> 8) & 255, long & 255 ].join('.');
+            }
+            
+            function maskToCidr(mask) {
+                if (!ipRegex.test(mask)) return null;
+                const binaryString = mask.split('.').map(octet => parseInt(octet).toString(2).padStart(8, '0')).join('');
+                if (!/^1*0*$/.test(binaryString)) {
+                    return null; // Não é uma máscara válida (ex: 11101111)
+                }
+                return (binaryString.match(/1/g) || []).length;
+            }
+
+            function showError(message) {
+                const errorDiv = document.getElementById('error-message');
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                document.getElementById('results').style.display = 'none';
+            }
+
+            // --- Geração Dinâmica do Dropdown de Máscaras ---
+            function populateCidrDropdown() {
+                const cidrDropdown = document.getElementById('cidrInput');
+                for (let i = 32; i >= 1; i--) {
+                    const maskLong = (0xFFFFFFFF << (32 - i)) >>> 0;
+                    const maskIp = longToIp(maskLong);
+                    
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `${maskIp} /${i}`;
+                    cidrDropdown.appendChild(option);
+                }
+            }
+            
+            populateCidrDropdown();
+
+            function performCalculation(ipAddress, cidr) {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '';
+                
+                const cidrInt = parseInt(cidr, 10);
+                const ipLong = ipToLong(ipAddress);
+                const maskLong = (0xFFFFFFFF << (32 - cidrInt)) >>> 0;
+                const networkLong = (ipLong & maskLong) >>> 0;
+                const broadcastLong = (networkLong | ~maskLong) >>> 0;
+                const networkAddress = longToIp(networkLong);
+                const subnetMask = longToIp(maskLong);
+                const broadcastAddress = longToIp(broadcastLong);
+                const hostCount = Math.pow(2, 32 - cidrInt);
+                const usableHosts = hostCount > 2 ? hostCount - 2 : 0;
+                const firstHostLong = (cidrInt < 31) ? networkLong + 1 : networkLong;
+                const lastHostLong = (cidrInt < 31) ? broadcastLong - 1 : broadcastLong;
+                const firstUsableHost = (cidrInt < 31) ? longToIp(firstHostLong) : 'N/A';
+                const lastUsableHost = (cidrInt < 31) ? longToIp(lastHostLong) : 'N/A';
+                const wildcardMask = longToIp(~maskLong);
+
+                const results = [
+                    { label: 'Endereço IP', value: `${ipAddress}/${cidrInt}` },
+                    { label: 'Endereço de Rede', value: networkAddress },
+                    { label: 'Endereço de Broadcast', value: broadcastAddress },
+                    { label: 'Primeiro Host Válido', value: firstUsableHost },
+                    { label: 'Último Host Válido', value: lastUsableHost },
+                    { label: 'Máscara de Sub-rede', value: subnetMask },
+                    { label: 'Máscara Wildcard', value: wildcardMask },
+                    { label: 'Total de Hosts', value: hostCount.toLocaleString('pt-BR') },
+                    { label: 'Hosts Utilizáveis', value: usableHosts.toLocaleString('pt-BR') },
+                ];
+
+                results.forEach(item => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.innerHTML = `<span>${item.label}</span><span>${item.value}</span>`;
+                    resultsDiv.appendChild(resultItem);
+                });
+                resultsDiv.style.display = 'block';
+            }
+
+            document.getElementById('calculateBtn').addEventListener('click', function() {
+                const ipInput = document.getElementById('ipInput').value.trim();
+                const cidrInput = document.getElementById('cidrInput').value;
+                const errorDiv = document.getElementById('error-message');
+                
+                errorDiv.style.display = 'none';
+
+                if (!ipInput) {
+                    showError("O campo de Endereço IP não pode estar vazio.");
+                    return;
+                }
+
+                const mainInputHasMask = ipInput.includes('/') || /\s/.test(ipInput);
+                const dropdownHasSelection = cidrInput !== '';
+
+                if (mainInputHasMask && dropdownHasSelection) {
+                    showError("A máscara foi informada duas vezes. Forneça no campo de IP ou selecione no menu, não em ambos.");
+                    return;
+                }
+                
+                let ipAddress = '';
+                let cidr = null;
+
+                if (mainInputHasMask) {
+                    if (ipInput.includes('/')) {
+                        const parts = ipInput.split('/');
+                        ipAddress = parts[0];
+                        cidr = parseInt(parts[1], 10);
+                        if (!ipRegex.test(ipAddress)) { showError("Endereço IP inválido no formato IP/CIDR."); return; }
+                        if (isNaN(cidr) || cidr < 0 || cidr > 32) { showError("Prefixo CIDR inválido. Deve ser um número entre 0 e 32."); return; }
+                    } else { // Contém espaço
+                        const parts = ipInput.split(/\s+/);
+                        ipAddress = parts[0];
+                        const mask = parts[1];
+                        if (!ipRegex.test(ipAddress)) { showError("Endereço IP inválido no formato IP MÁSCARA."); return; }
+                        cidr = maskToCidr(mask);
+                        if (cidr === null) { showError("Máscara de sub-rede inválida."); return; }
+                    }
+                } else {
+                    ipAddress = ipInput;
+                    if (!ipRegex.test(ipAddress)) { showError("Formato de endereço IP inválido."); return; }
+                    if (!dropdownHasSelection) { showError("Selecione uma máscara de rede no menu."); return; }
+                    cidr = parseInt(cidrInput, 10);
+                }
+                
+                if (ipAddress && cidr !== null) {
+                    performCalculation(ipAddress, cidr);
+                } else {
+                    showError("Não foi possível analisar a entrada. Verifique o formato.");
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
