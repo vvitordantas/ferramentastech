@@ -269,11 +269,12 @@
                 const wildcardMask = longToIp(~maskLong);
 
                 const results = [
-                    { label: 'Endereço IP', value: `${ipAddress}/${cidrInt}` },
+                    { label: 'Endereço IP', value: ipAddress },
                     { label: 'Endereço de Rede', value: networkAddress },
                     { label: 'Endereço de Broadcast', value: broadcastAddress },
                     { label: 'Primeiro Host Válido', value: firstUsableHost },
                     { label: 'Último Host Válido', value: lastUsableHost },
+                    { label: 'Prefixo CIDR', value: cidrInt },
                     { label: 'Máscara de Sub-rede', value: subnetMask },
                     { label: 'Máscara Wildcard', value: wildcardMask },
                     { label: 'Total de Hosts', value: hostCount.toLocaleString('pt-BR') },
