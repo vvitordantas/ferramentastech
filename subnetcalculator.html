@@ -225,6 +225,26 @@
                 return (binaryString.match(/1/g) || []).length;
             }
 
+            function getIpType(ipLong) {
+                // Faixa 10.0.0.0 a 10.255.255.255 (10.0.0.0/8)
+                if (ipLong >= 167772160 && ipLong <= 184549375) {
+                    return 'Privado';
+                }
+                // Faixa 172.16.0.0 a 172.31.255.255 (172.16.0.0/12)
+                if (ipLong >= 2886729728 && ipLong <= 2887778303) {
+                    return 'Privado';
+                }
+                // Faixa 192.168.0.0 a 192.168.255.255 (192.168.0.0/16)
+                if (ipLong >= 3232235520 && ipLong <= 3232301055) {
+                    return 'Privado';
+                }
+                // Faixa APIPA 169.254.0.0 a 169.254.255.255 (169.254.0.0/16)
+                if (ipLong >= 2851995648 && ipLong <= 2852061183) {
+                    return 'Privado (APIPA)';
+                }
+                return 'Público';
+            }
+
             function showError(message) {
                 const errorDiv = document.getElementById('error-message');
                 errorDiv.textContent = message;
@@ -254,6 +274,8 @@
                 
                 const cidrInt = parseInt(cidr, 10);
                 const ipLong = ipToLong(ipAddress);
+                const ipType = getIpType(ipLong);
+                
                 const maskLong = (0xFFFFFFFF << (32 - cidrInt)) >>> 0;
                 const networkLong = (ipLong & maskLong) >>> 0;
                 const broadcastLong = (networkLong | ~maskLong) >>> 0;
@@ -279,6 +301,7 @@
                     { label: 'Máscara Wildcard', value: wildcardMask },
                     { label: 'Total de Hosts', value: hostCount.toLocaleString('pt-BR') },
                     { label: 'Hosts Utilizáveis', value: usableHosts.toLocaleString('pt-BR') },
+                    { label: 'Tipo de Endereço', value: ipType }
                 ];
 
                 results.forEach(item => {
@@ -329,7 +352,7 @@
                         if (cidr === null) { showError("Máscara de sub-rede inválida."); return; }
                     }
                 } else {
-                    ipAddress = ipInput;
+                    ipAddress = ipAddress;
                     if (!ipRegex.test(ipAddress)) { showError("Formato de endereço IP inválido."); return; }
                     if (!dropdownHasSelection) { showError("Selecione uma máscara de rede no menu."); return; }
                     cidr = parseInt(cidrInput, 10);
