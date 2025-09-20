@@ -225,25 +225,33 @@
                 return (binaryString.match(/1/g) || []).length;
             }
 
-            function getIpType(ipLong) {
-                // Faixa 10.0.0.0 a 10.255.255.255 (10.0.0.0/8)
-                if (ipLong >= 167772160 && ipLong <= 184549375) {
-                    return 'Privado';
-                }
-                // Faixa 172.16.0.0 a 172.31.255.255 (172.16.0.0/12)
-                if (ipLong >= 2886729728 && ipLong <= 2887778303) {
-                    return 'Privado';
-                }
-                // Faixa 192.168.0.0 a 192.168.255.255 (192.168.0.0/16)
-                if (ipLong >= 3232235520 && ipLong <= 3232301055) {
-                    return 'Privado';
-                }
-                // Faixa APIPA 169.254.0.0 a 169.254.255.255 (169.254.0.0/16)
-                if (ipLong >= 2851995648 && ipLong <= 2852061183) {
-                    return 'Privado (APIPA)';
-                }
-                return 'Público';
-            }
+          function getIpType(ipLong) {
+              // Faixa 10.0.0.0 a 10.255.255.255 (10.0.0.0/8) Classe A
+              if (ipLong >= 167772160 && ipLong <= 184549375) {
+                  return 'Privado';
+              }
+              // Faixa 127.0.0.0 a 127.255.255.255 (127.0.0.0/8) Loopback
+              if (ipLong >= 2130706432 && ipLong <= 2147483647) {
+                  return 'Loopback';
+              }
+              // Faixa 169.254.0.0 a 169.254.255.255 (169.254.0.0/16) APIPA
+              if (ipLong >= 2851995648 && ipLong <= 2852061183) {
+                  return 'APIPA';
+              }
+              // Faixa 172.16.0.0 a 172.31.255.255 (172.16.0.0/12) Classe B
+              if (ipLong >= 2886729728 && ipLong <= 2887778303) {
+                  return 'Privado';
+              }
+              // Faixa 192.168.0.0 a 192.168.255.255 (192.168.0.0/16) Classe C
+              if (ipLong >= 3232235520 && ipLong <= 3232301055) {
+                  return 'Privado';
+              }
+              // Faixa 224.0.0.0 a 239.255.255.255 (224.0.0.0/4) Multicast
+              if (ipLong >= 3758096384 && ipLong <= 4026531839) {
+                  return 'Multicast';
+              }            
+              return 'Público';
+          }
 
             function showError(message) {
                 const errorDiv = document.getElementById('error-message');
@@ -352,7 +360,7 @@
                         if (cidr === null) { showError("Máscara de sub-rede inválida."); return; }
                     }
                 } else {
-                    ipAddress = ipAddress;
+                    ipAddress = ipInput;
                     if (!ipRegex.test(ipAddress)) { showError("Formato de endereço IP inválido."); return; }
                     if (!dropdownHasSelection) { showError("Selecione uma máscara de rede no menu."); return; }
                     cidr = parseInt(cidrInput, 10);
