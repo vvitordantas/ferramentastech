@@ -228,34 +228,36 @@
                 return (binaryString.match(/1/g) || []).length;
             }
 
-          function getIpType(ipLong) {
-              // Faixa 10.0.0.0 a 10.255.255.255 (10.0.0.0/8) Classe A
-              if (ipLong >= 167772160 && ipLong <= 184549375) {
-                  return 'Privado';
-              }
-              // Faixa 127.0.0.0 a 127.255.255.255 (127.0.0.0/8) Loopback
-              if (ipLong >= 2130706432 && ipLong <= 2147483647) {
-                  return 'Loopback';
-              }
-              // Faixa 169.254.0.0 a 169.254.255.255 (169.254.0.0/16) APIPA
-              if (ipLong >= 2851995648 && ipLong <= 2852061183) {
-                  return 'APIPA';
-              }
-              // Faixa 172.16.0.0 a 172.31.255.255 (172.16.0.0/12) Classe B
-              if (ipLong >= 2886729728 && ipLong <= 2887778303) {
-                  return 'Privado';
-              }
-              // Faixa 192.168.0.0 a 192.168.255.255 (192.168.0.0/16) Classe C
-              if (ipLong >= 3232235520 && ipLong <= 3232301055) {
-                  return 'Privado';
-              }
-              // Faixa 224.0.0.0 a 239.255.255.255 (224.0.0.0/4) Multicast
-              if (ipLong >= 3758096384 && ipLong <= 4026531839) {
-                  return 'Multicast';
-              }            
-              return 'Público';
-          }
+function getIpType(ipLong) {
+    ipLong = ipLong >>> 0; 
 
+    // Faixa 10.0.0.0/8 - Classe A (Privado)
+    if (ipLong >= 167772160 && ipLong <= 184549375) return 'Privado';
+
+    // Faixa 100.64.0.0/10 - CGNAT (Opcional, mas comum hoje em dia)
+    if (ipLong >= 1681915904 && ipLong <= 1686110207) return 'CGNAT (Privado ISP)';
+
+    // Faixa 127.0.0.0/8 - Loopback
+    if (ipLong >= 2130706432 && ipLong <= 2147483647) return 'Loopback';
+
+    // Faixa 169.254.0.0/16 - APIPA (Link-Local)
+    if (ipLong >= 2851995648 && ipLong <= 2852061183) return 'APIPA';
+
+    // Faixa 172.16.0.0/12 - Classe B (Privado)
+    if (ipLong >= 2886729728 && ipLong <= 2887778303) return 'Privado';
+
+    // Faixa 192.168.0.0/16 - Classe C (Privado)
+    if (ipLong >= 3232235520 && ipLong <= 3232301055) return 'Privado';
+
+    // Faixa 224.0.0.0/4 - Multicast
+    if (ipLong >= 3758096384 && ipLong <= 4026531839) return 'Multicast';
+
+    // Faixa 240.0.0.0/4 - Reservado (Classe E) / Futuro
+    if (ipLong >= 4026531840 && ipLong <= 4294967295) return 'Reservado';
+
+    return 'Público';
+}
+   
             function showError(message) {
                 const errorDiv = document.getElementById('error-message');
                 errorDiv.textContent = message;
@@ -380,4 +382,5 @@
 
 </body>
 </html>
+
 
